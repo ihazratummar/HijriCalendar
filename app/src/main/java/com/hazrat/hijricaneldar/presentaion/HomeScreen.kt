@@ -1,6 +1,7 @@
 package com.hazrat.hijricaneldar.presentaion
 
 import android.os.Build
+import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -12,6 +13,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -67,14 +70,24 @@ fun CalendarScreen(viewModel: HomeScreenViewModel = hiltViewModel()) {
         daysWithOffset.chunked(7)
     }
 
+    val hijriDay by viewModel.hijriDate.collectAsState()
+    val hijriDayNew = hijriDay.firstOrNull()
+    if (hijriDayNew != null) {
+        Log.d("HomeScreen" ,"${hijriDayNew.day}")
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(16.dp)
+            .padding(16.dp),
+        verticalArrangement = Arrangement.Top,
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(text = "Hijri Calendar", style = MaterialTheme.typography.headlineSmall)
         if (calendar != null) {
-            Text(text = "${calendar.hijriMonthEn} ${calendar.hijriMonthAr}")
+            if (hijriDayNew != null) {
+                Text(text = "${hijriDayNew.day} ${hijriDayNew.monthEn} ${hijriDayNew.year}${calendar.hijriAbbreviated}")
+            }
         }
         WeekNamesRow(weekNames)
         paddedDays.forEach { week ->
@@ -101,7 +114,9 @@ fun getWeekNames(startingDay: String): List<String> {
 @Composable
 fun WeekNamesRow(weekNames: List<String>) {
     Row(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -142,31 +157,40 @@ fun DayItem(
 ) {
     val currentDay = LocalDate.now().dayOfMonth
     val backgroundColor = if (selectedDay.value == day && day.gregorianDay != currentDay) {
-        Color.Blue.copy(0.5f)
+        Color.Blue.copy(0.1f)
     } else {
         if (day.gregorianDay == currentDay) {
-            Color.Yellow
+            Color.Cyan.copy(0.1f)
         } else {
-            Color.LightGray
+            Color.Transparent
         }
     }
     Box(
         modifier = Modifier
-            .padding(4.dp)
+            .padding(horizontal = 4.dp, vertical = 6.dp)
+            .width(40.dp)
             .clickable {
                 selectedDay.value = day
             }
-            .background(backgroundColor)
-            .size(40.dp),
+            .background(backgroundColor),
         contentAlignment = Alignment.Center
     ) {
         Column(
-            modifier = Modifier.fillMaxSize(),
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(text = day.hijriDay.toString())
             Text(text = day.gregorianDay.toString(), fontSize = 10.sp)
+            if (currentDay == day.gregorianDay){
+                Box (
+                    modifier = Modifier
+                        .size(6.dp)
+                        .background(Color.Cyan, shape = CircleShape)
+                        .padding(4.dp)
+                ){
+
+                }
+            }
         }
     }
 }

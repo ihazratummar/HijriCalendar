@@ -7,5 +7,5 @@ import kotlinx.coroutines.flow.Flow
 interface GregorianToHijriRepository {
     suspend fun getGregorianToHijriDate(): GregorianToHijriResponse
 
-    suspend fun gregorianToHijriEntity(): GregorianToHijriEntity
+    fun gregorianToHijriEntity(): Flow<List<GregorianToHijriEntity>>
 }

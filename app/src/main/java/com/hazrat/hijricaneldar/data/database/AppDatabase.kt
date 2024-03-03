@@ -7,7 +7,7 @@ import com.hazrat.hijricaneldar.data.dao.HijriCalendarDao
 import com.hazrat.hijricaneldar.data.entity.GregorianToHijriEntity
 import com.hazrat.hijricaneldar.data.entity.HijriCalendarEntity
 
-@Database(entities = [GregorianToHijriEntity::class, HijriCalendarEntity::class], version = 2)
+@Database(entities = [GregorianToHijriEntity::class, HijriCalendarEntity::class], version = 3)
 abstract class AppDatabase: RoomDatabase() {
     abstract fun gregorianToHijriDao(): GregorianToHijriDao
 

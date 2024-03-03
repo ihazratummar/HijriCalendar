@@ -12,6 +12,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.conflate
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.flowOn
 
 class HijriCalendarRepositoryImpl(
@@ -20,32 +21,42 @@ class HijriCalendarRepositoryImpl(
     private val hijriCalendarDao: HijriCalendarDao
 ) : HijriCalendarRepository {
     override suspend fun getHijriCalendarFromApi(): HijriCalendarResponse {
-        val singleData: GregorianToHijriEntity = gregorianToHijriEntity()
-        val month  = singleData.monthNumber
-        val year  = singleData.year
+        val dataList: List<GregorianToHijriEntity> = gregorianToHijriEntity().firstOrNull()
+            ?: throw IllegalStateException("GregorianToHijriEntity list is null or empty")
 
-        val apiResponse = api.getHijriCalendar(month, year)
-        apiResponse.data.forEach { apiDates ->
-            val hijriCalendarEntity = convertApiResponseToEntity(apiDates)
-            insertCalendarList(hijriCalendarEntity)
+        if (dataList.isNotEmpty()) {
+            val singleData = dataList.first()
+            val month = singleData.monthNumber
+            val year = singleData.year
+
+            val apiResponse = api.getHijriCalendar(month, year)
+            apiResponse.data.forEach { apiDates ->
+                val hijriCalendarEntity = convertApiResponseToEntity(apiDates)
+                insertCalendarList(hijriCalendarEntity)
+            }
+            return apiResponse
+        } else {
+            // Handle the case when GregorianToHijriEntity list is empty
+            throw IllegalStateException("GregorianToHijriEntity list is empty")
         }
-        return  apiResponse
     }
 
-    override suspend fun gregorianToHijriEntity():GregorianToHijriEntity {
-        return gregorianToHijriDao.getGregorianToHijriData()
-    }
+    override fun gregorianToHijriEntity(): Flow<List<GregorianToHijriEntity>> =
+        gregorianToHijriDao.getGregorianToHijriData().flowOn(Dispatchers.IO)
+            .conflate()
+
 
     override suspend fun insertCalendarList(hijriCalendarList: HijriCalendarEntity): HijriCalendarEntity {
-         hijriCalendarDao.insertHijriCalendar(hijriCalendarList)
+        hijriCalendarDao.insertHijriCalendar(hijriCalendarList)
         return hijriCalendarList
     }
 
-    override fun getCalendarList(): Flow<List<HijriCalendarEntity>>  = hijriCalendarDao.getCalendarList().flowOn(Dispatchers.IO)
-        .conflate()
+    override fun getCalendarList(): Flow<List<HijriCalendarEntity>> =
+        hijriCalendarDao.getCalendarList().flowOn(Dispatchers.IO)
+            .conflate()
 
 
-    private fun convertApiResponseToEntity(apiResponse: Data): HijriCalendarEntity{
+    private fun convertApiResponseToEntity(apiResponse: Data): HijriCalendarEntity {
         val hijri = apiResponse.hijri
         val gregorian = apiResponse.gregorian
         return HijriCalendarEntity(

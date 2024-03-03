@@ -33,7 +33,7 @@ class GregorianToHijriRepositoryImpl(
         }
     }
 
-    override suspend fun gregorianToHijriEntity(): GregorianToHijriEntity {
+    override  fun gregorianToHijriEntity(): Flow<List<GregorianToHijriEntity>> {
         return  gregorianToHijriDao.getGregorianToHijriData()
     }
 
@@ -48,7 +48,7 @@ class GregorianToHijriRepositoryImpl(
             monthAr = data.month.ar,
             monthEn = data.month.en,
             year = data.year,
-            designationAabbreviated = data.designation.abbreviated,
+            designationAbbreviated = data.designation.abbreviated,
             designationExpanded = data.designation.expanded,
             holidays = data.holidays.joinToString(" ")?: "No Events"
         )

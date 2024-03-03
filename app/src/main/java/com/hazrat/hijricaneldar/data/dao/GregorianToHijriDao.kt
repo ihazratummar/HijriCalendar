@@ -14,7 +14,7 @@ interface GregorianToHijriDao {
     suspend fun insertOrUpdate(entity: GregorianToHijriEntity)
 
     @Query("SELECT * FROM gregoriantohijrientity WHERE id = 1")
-    suspend fun  getGregorianToHijriData(): GregorianToHijriEntity
+    fun  getGregorianToHijriData():Flow<List<GregorianToHijriEntity>>
 
 
 }

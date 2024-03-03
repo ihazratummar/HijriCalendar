@@ -9,7 +9,7 @@ interface HijriCalendarRepository {
 
     suspend fun getHijriCalendarFromApi(): HijriCalendarResponse?
 
-    suspend fun gregorianToHijriEntity(): GregorianToHijriEntity
+    fun gregorianToHijriEntity(): Flow<List<GregorianToHijriEntity>>
 
     suspend fun insertCalendarList(hijriCalendarList: HijriCalendarEntity): HijriCalendarEntity
 

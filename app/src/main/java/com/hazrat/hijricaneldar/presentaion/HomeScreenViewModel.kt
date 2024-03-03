@@ -1,13 +1,10 @@
 package com.hazrat.hijricaneldar.presentaion
 
 import android.util.Log
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.hazrat.hijricaneldar.data.entity.GregorianToHijriEntity
 import com.hazrat.hijricaneldar.data.entity.HijriCalendarEntity
-import com.hazrat.hijricaneldar.domain.model.hijricalendar.HijriCalendarResponse
 import com.hazrat.hijricaneldar.domain.repository.GregorianToHijriRepository
 import com.hazrat.hijricaneldar.domain.repository.HijriCalendarRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -34,7 +31,14 @@ class HomeScreenViewModel @Inject constructor(
 
     private fun fetchHijriDate() {
         viewModelScope.launch(Dispatchers.IO) {
-            _hijriDate.value = listOf(repository.gregorianToHijriEntity())
+            repository.gregorianToHijriEntity().distinctUntilChanged()
+                .collectLatest { hijriDay: List<GregorianToHijriEntity> ->
+                    if (hijriDay.isEmpty()){
+                        Log.d("testing",": Empty list ")
+                    }else{
+                        _hijriDate.value = hijriDay
+                    }
+                }
         }
     }
 

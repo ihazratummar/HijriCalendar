@@ -4,11 +4,10 @@ import androidx.room.Entity
 import androidx.room.PrimaryKey
 
 
-@Entity()
+@Entity
 data class GregorianToHijriEntity(
     @PrimaryKey
     val id: Long = 1,
-
     val date: String,
     val day: Int,
     val weekdayEn: String,
@@ -17,7 +16,7 @@ data class GregorianToHijriEntity(
     val monthEn: String,
     val monthAr: String,
     val year: String,
-    val designationAabbreviated: String,
+    val designationAbbreviated: String,
     val designationExpanded: String,
     val holidays: String? = "No Events"
 )

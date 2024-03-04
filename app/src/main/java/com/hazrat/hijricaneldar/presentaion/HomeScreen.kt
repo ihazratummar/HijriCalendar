@@ -15,6 +15,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.outlined.CheckCircle
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -31,6 +35,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.hazrat.hijricaneldar.data.entity.HijriCalendarEntity
+import com.hazrat.hijricaneldar.domain.model.Task
 import java.time.LocalDate
 
 @RequiresApi(Build.VERSION_CODES.O)
@@ -79,7 +84,7 @@ fun CalendarScreen(viewModel: HomeScreenViewModel = hiltViewModel()) {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(16.dp),
+            .padding(horizontal = 10.dp, vertical = 10.dp),
         verticalArrangement = Arrangement.Top,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
@@ -93,11 +98,63 @@ fun CalendarScreen(viewModel: HomeScreenViewModel = hiltViewModel()) {
         paddedDays.forEach { week ->
             WeekItem(
                 week = week.filterNotNull(),
-                selectedDay = selectedDay
+                selectedDay = selectedDay,
+                onDaySelected = { day ->
+                    val selectedDate = LocalDate.of(day.hijriYear.toInt(), day.hijriMonthNumber, day.hijriDay)
+                    selectedDay.value = day
+                    viewModel.updateSelectedDay(selectedDate) // Update the selected day in the view model
+                }
+            )
+        }
+        // Display tasks for the selected day
+        val tasksForSelectedDay = viewModel.getTasksForSelectedDay()
+        tasksForSelectedDay.forEach { task ->
+            TaskItem(
+                task = task,
+                onTaskClicked = { viewModel.toggleTaskCheckedState(task, !task.isChecked ) }
             )
         }
     }
 }
+
+
+@Composable
+fun TaskItem(
+    task: Task,
+    onTaskClicked: () -> Unit
+) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier.clickable(onClick = onTaskClicked)
+    ) {
+        Box(
+            contentAlignment = Alignment.Center,
+            modifier = Modifier
+                .size(24.dp)
+                .clickable(onClick = onTaskClicked)
+                .background(
+                    color = if (task.isChecked) Color.Blue else Color.Transparent,
+                    shape = CircleShape
+                )
+        ) {
+            if (task.isChecked) {
+                Icon(
+                    imageVector = Icons.Default.Check,
+                    contentDescription = "Checked",
+                    tint = Color.White
+                )
+            }else{
+                Icon(imageVector = Icons.Outlined.CheckCircle,
+                    contentDescription = "UnChecked")
+            }
+        }
+        Text(
+            text = task.name,
+            modifier = Modifier.padding(start = 8.dp)
+        )
+    }
+}
+
 
 fun getWeekNames(startingDay: String): List<String> {
     val days = listOf("Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday")
@@ -135,7 +192,8 @@ fun WeekNamesRow(weekNames: List<String>) {
 @Composable
 fun WeekItem(
     week: List<HijriCalendarEntity>,
-    selectedDay: MutableState<HijriCalendarEntity?>
+    selectedDay: MutableState<HijriCalendarEntity?>,
+    onDaySelected: (HijriCalendarEntity) -> Unit
 ) {
     Row(
         modifier = Modifier.fillMaxWidth()
@@ -143,7 +201,8 @@ fun WeekItem(
         week.forEach { day ->
             DayItem(
                 day = day,
-                selectedDay = selectedDay
+                selectedDay = selectedDay,
+                onDaySelected = onDaySelected
             )
         }
     }
@@ -153,7 +212,8 @@ fun WeekItem(
 @Composable
 fun DayItem(
     day: HijriCalendarEntity,
-    selectedDay: MutableState<HijriCalendarEntity?>
+    selectedDay: MutableState<HijriCalendarEntity?>,
+    onDaySelected: (HijriCalendarEntity) -> Unit
 ) {
     val currentDay = LocalDate.now().dayOfMonth
     val backgroundColor = if (selectedDay.value == day && day.gregorianDay != currentDay) {
@@ -170,6 +230,7 @@ fun DayItem(
             .padding(horizontal = 4.dp, vertical = 6.dp)
             .width(40.dp)
             .clickable {
+                onDaySelected(day)
                 selectedDay.value = day
             }
             .background(backgroundColor),

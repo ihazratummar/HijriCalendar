@@ -17,6 +17,5 @@ data class GregorianToHijriEntity(
     val monthAr: String,
     val year: String,
     val designationAbbreviated: String,
-    val designationExpanded: String,
-    val holidays: String? = "No Events"
+    val designationExpanded: String
 )

@@ -2,9 +2,11 @@ package com.hazrat.hijricaneldar.data.entity
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import androidx.room.TypeConverters
 
 
 @Entity
+@TypeConverters(HolidayListConverter::class)
 data class HijriCalendarEntity(
     @PrimaryKey
     val hijriDay: Int,
@@ -22,5 +24,6 @@ data class HijriCalendarEntity(
     val gregorianMonthEn: String,
     val hijriWeekDayEn: String,
     val hijriWeekDayAr: String,
-    val gregorianWeekDayEn: String
+    val gregorianWeekDayEn: String,
+    val holidays: List<String>?
 )

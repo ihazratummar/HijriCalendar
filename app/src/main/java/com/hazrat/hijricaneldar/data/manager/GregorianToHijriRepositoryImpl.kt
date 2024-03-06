@@ -50,7 +50,6 @@ class GregorianToHijriRepositoryImpl(
             year = data.year,
             designationAbbreviated = data.designation.abbreviated,
             designationExpanded = data.designation.expanded,
-            holidays = data.holidays.joinToString(" ")?: "No Events"
         )
         gregorianToHijriDao.insertOrUpdate(hijriEntity)
     }

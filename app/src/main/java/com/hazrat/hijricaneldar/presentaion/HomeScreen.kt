@@ -4,6 +4,7 @@ import android.os.Build
 import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -15,10 +16,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.outlined.CheckCircle
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -35,7 +32,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.hazrat.hijricaneldar.data.entity.HijriCalendarEntity
-import com.hazrat.hijricaneldar.domain.model.Task
 import java.time.LocalDate
 
 @RequiresApi(Build.VERSION_CODES.O)
@@ -63,7 +59,7 @@ fun CalendarScreen(viewModel: HomeScreenViewModel = hiltViewModel()) {
     }
     daysWithOffset.addAll(hijriCalendar)
 
-    val selectedDay = remember { mutableStateOf<HijriCalendarEntity?>(null) }
+    val selectedDays = remember { mutableStateOf<List<HijriCalendarEntity>>(emptyList()) }
 
     val paddedDays = if (daysWithOffset.size % 7 != 0) {
         val remainingDays = 7 - (daysWithOffset.size % 7)
@@ -78,7 +74,7 @@ fun CalendarScreen(viewModel: HomeScreenViewModel = hiltViewModel()) {
     val hijriDay by viewModel.hijriDate.collectAsState()
     val hijriDayNew = hijriDay.firstOrNull()
     if (hijriDayNew != null) {
-        Log.d("HomeScreen" ,"${hijriDayNew.day}")
+        Log.d("HomeScreen", "${hijriDayNew.day}")
     }
 
     Column(
@@ -98,60 +94,12 @@ fun CalendarScreen(viewModel: HomeScreenViewModel = hiltViewModel()) {
         paddedDays.forEach { week ->
             WeekItem(
                 week = week.filterNotNull(),
-                selectedDay = selectedDay,
+                selectedDays = selectedDays,
                 onDaySelected = { day ->
-                    val selectedDate = LocalDate.of(day.hijriYear.toInt(), day.hijriMonthNumber, day.hijriDay)
-                    selectedDay.value = day
-                    viewModel.updateSelectedDay(selectedDate) // Update the selected day in the view model
+                    selectedDays.value = listOf(day)
                 }
             )
         }
-        // Display tasks for the selected day
-        val tasksForSelectedDay = viewModel.getTasksForSelectedDay()
-        tasksForSelectedDay.forEach { task ->
-            TaskItem(
-                task = task,
-                onTaskClicked = { viewModel.toggleTaskCheckedState(task, !task.isChecked ) }
-            )
-        }
-    }
-}
-
-
-@Composable
-fun TaskItem(
-    task: Task,
-    onTaskClicked: () -> Unit
-) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier.clickable(onClick = onTaskClicked)
-    ) {
-        Box(
-            contentAlignment = Alignment.Center,
-            modifier = Modifier
-                .size(24.dp)
-                .clickable(onClick = onTaskClicked)
-                .background(
-                    color = if (task.isChecked) Color.Blue else Color.Transparent,
-                    shape = CircleShape
-                )
-        ) {
-            if (task.isChecked) {
-                Icon(
-                    imageVector = Icons.Default.Check,
-                    contentDescription = "Checked",
-                    tint = Color.White
-                )
-            }else{
-                Icon(imageVector = Icons.Outlined.CheckCircle,
-                    contentDescription = "UnChecked")
-            }
-        }
-        Text(
-            text = task.name,
-            modifier = Modifier.padding(start = 8.dp)
-        )
     }
 }
 
@@ -192,7 +140,7 @@ fun WeekNamesRow(weekNames: List<String>) {
 @Composable
 fun WeekItem(
     week: List<HijriCalendarEntity>,
-    selectedDay: MutableState<HijriCalendarEntity?>,
+    selectedDays: MutableState<List<HijriCalendarEntity>>,
     onDaySelected: (HijriCalendarEntity) -> Unit
 ) {
     Row(
@@ -201,8 +149,16 @@ fun WeekItem(
         week.forEach { day ->
             DayItem(
                 day = day,
-                selectedDay = selectedDay,
-                onDaySelected = onDaySelected
+                isSelected = selectedDays.value.contains(day), // Check if the day is selected
+                onDaySelected = {
+                    val updatedSelectedDays = if (selectedDays.value.contains(it)) {
+                        selectedDays.value.filterNot { selectedDay -> selectedDay == it }
+                    } else {
+                        selectedDays.value + it
+                    }
+                    selectedDays.value = updatedSelectedDays
+                    onDaySelected(it) // Call the provided callback
+                }
             )
         }
     }
@@ -212,11 +168,11 @@ fun WeekItem(
 @Composable
 fun DayItem(
     day: HijriCalendarEntity,
-    selectedDay: MutableState<HijriCalendarEntity?>,
+    isSelected: Boolean,
     onDaySelected: (HijriCalendarEntity) -> Unit
 ) {
     val currentDay = LocalDate.now().dayOfMonth
-    val backgroundColor = if (selectedDay.value == day && day.gregorianDay != currentDay) {
+    val backgroundColor = if (isSelected && day.gregorianDay != currentDay) {
         Color.Blue.copy(0.1f)
     } else {
         if (day.gregorianDay == currentDay) {
@@ -231,10 +187,10 @@ fun DayItem(
             .width(40.dp)
             .clickable {
                 onDaySelected(day)
-                selectedDay.value = day
             }
-            .background(backgroundColor),
-        contentAlignment = Alignment.Center
+            .background(backgroundColor, shape = CircleShape)
+            .border(0.1.dp, Color.Black, shape = CircleShape),
+        contentAlignment = Alignment.Center,
     ) {
         Column(
             verticalArrangement = Arrangement.Center,
@@ -242,13 +198,13 @@ fun DayItem(
         ) {
             Text(text = day.hijriDay.toString())
             Text(text = day.gregorianDay.toString(), fontSize = 10.sp)
-            if (currentDay == day.gregorianDay){
-                Box (
+            if (currentDay == day.gregorianDay) {
+                Box(
                     modifier = Modifier
                         .size(6.dp)
                         .background(Color.Cyan, shape = CircleShape)
-                        .padding(4.dp)
-                ){
+                        .padding(bottom = 4.dp)
+                ) {
 
                 }
             }

@@ -37,15 +37,8 @@ class HomeScreenViewModel @Inject constructor(
     private val _hijriCalendar = MutableStateFlow<List<HijriCalendarEntity>>(emptyList())
     val hijriCalendar = _hijriCalendar.asStateFlow()
 
-    // State to hold the selected day
-    private val _selectedDay = mutableStateOf<LocalDate?>(null)
-    val selectedDay: State<LocalDate?> = _selectedDay
-
-    // State to hold the tasks for each day
-    private val tasksByDay = mutableStateMapOf<LocalDate, List<Task>>()
-
     private fun fetchHijriDate() {
-        viewModelScope.launch(Dispatchers.IO) {
+        viewModelScope.launch {
             repository.gregorianToHijriEntity().distinctUntilChanged()
                 .collectLatest { hijriDay: List<GregorianToHijriEntity> ->
                     if (hijriDay.isEmpty()) {
@@ -58,60 +51,25 @@ class HomeScreenViewModel @Inject constructor(
     }
 
     private fun fetchHijriCalendar() {
-        viewModelScope.launch(Dispatchers.IO) {
+        viewModelScope.launch {
             hijriCalendarRepository.getCalendarList().distinctUntilChanged()
                 .collectLatest { calenderList: List<HijriCalendarEntity> ->
                     if (calenderList.isEmpty()) {
                         Log.d("testing", ": Empty list ")
                     } else {
                         _hijriCalendar.value = calenderList
+                        Log.d("testing", ": Empty list $calenderList")
                     }
                 }
         }
     }
 
     init {
-        /// Initialize tasks for the current day
-        _selectedDay.value = LocalDate.now()
-        val initialTasks = listOf(
-            Task("Task 1", isChecked = false),
-            Task("Task 2", isChecked = false),
-            Task("Task 3", isChecked = false),
-            Task("Task 4", isChecked = false),
-            Task("Task 5", isChecked = false)
-        )
-        tasksByDay[LocalDate.now()] = initialTasks
-
         viewModelScope.launch {
             repository.getGregorianToHijriDate()
             hijriCalendarRepository.getHijriCalendarFromApi()
         }
         fetchHijriDate()
         fetchHijriCalendar()
-
-    }
-
-    // Function to update the selected day
-    fun updateSelectedDay(day: LocalDate) {
-        _selectedDay.value = day
-    }
-
-    // Function to get tasks for the selected day
-    @RequiresApi(Build.VERSION_CODES.O)
-    fun getTasksForSelectedDay(): List<Task> {
-        return tasksByDay[selectedDay.value] ?: emptyList()
-    }
-
-    // Function to toggle the checked state of a task
-    fun toggleTaskCheckedState(task: Task, isChecked: Boolean) {
-        val tasks = tasksByDay[selectedDay.value]?.toMutableList() ?: return
-        val index = tasks.indexOf(task)
-        if (index != -1) {
-            val updatedTask = task.copy(isChecked = isChecked)
-            tasks[index] = updatedTask
-            selectedDay.value?.let { day ->
-                tasksByDay[day] = tasks
-            }
-        }
     }
 }

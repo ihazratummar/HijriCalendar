@@ -11,7 +11,6 @@ import com.hazrat.hijricaneldar.network.HijriCalendarApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.conflate
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.flowOn
 
@@ -52,7 +51,7 @@ class HijriCalendarRepositoryImpl(
     }
 
     override fun getCalendarList(): Flow<List<HijriCalendarEntity>> =
-        hijriCalendarDao.getCalendarList().flowOn(Dispatchers.IO)
+        hijriCalendarDao.getCalendarList().flowOn(Dispatchers.Default)
             .conflate()
 
 
@@ -75,7 +74,8 @@ class HijriCalendarRepositoryImpl(
             gregorianMonthEn = gregorian.month.en,
             hijriWeekDayEn = hijri.weekday.en,
             hijriWeekDayAr = hijri.weekday.ar,
-            gregorianWeekDayEn = gregorian.weekday.en
+            gregorianWeekDayEn = gregorian.weekday.en,
+            holidays = hijri.holidays
         )
     }
 }
